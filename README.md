@@ -4,15 +4,19 @@
 
 - `unix`: Unix tools
 - `windows`: Windows tools
+- `dev`: Scripts for developing these tools
 - More to come?
 
 ## Contributing
 
-Make pull requests to `develop` branch. PRs require 1 approving review before merging. 
+Run `./dev/setup`. This will set up the pre-commit hooks that we run in CI. If the pre-commit
+hooks fail, you will not be able to merge PRs.
+
+Make pull requests to `develop` branch. PRs require 1 approving review before merging.
 
 ## Freezing and Submitting to CCDC
 
-When the deadline is reached for submitting to CCDC, tag the latest `develop` commit and 
+When the deadline is reached for submitting to CCDC, tag the latest `develop` commit and
 create a release on GitHub.
 
 ```sh
@@ -25,7 +29,7 @@ To download the released version, you can download the source through the releas
 e.g.
 ```
 git tag 2021-qualifiers
-git push --tags 
+git push --tags
 # Create github release with the 2021-qualifiers tag
 
 # These archives will then be available:
