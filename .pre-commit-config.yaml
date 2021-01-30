@@ -29,6 +29,7 @@ repos:
 
   # shell linting
   - id: shellcheck
+    files: ^unix/
     entry: shellcheck
     language: python
     types: [shell]
@@ -38,6 +39,7 @@ repos:
   # Adhere to the google shell guide:
   # Executables should have no extension (strongly preferred)
   - id: script-must-not-have-extension
+    files: ^unix/
     types:
     - shell
     - executable
