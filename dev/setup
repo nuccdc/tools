@@ -1,7 +1,6 @@
 #!/bin/sh
 
 # Sets up local dev environment
-
 set -x
 
 DEV_DIR=$(dirname "$0")

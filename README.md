@@ -9,8 +9,8 @@
 
 ## Contributing
 
-Requires [shellcheck](https://github.com/koalaman/shellcheck) locally to run the precommit
-hooks.
+Run `./dev/setup`. This will set up the pre-commit hooks that we run in CI. If the pre-commit
+hooks fail, you will not be able to merge PRs.
 
 Make pull requests to `develop` branch. PRs require 1 approving review before merging.
 
