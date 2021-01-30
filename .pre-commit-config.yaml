@@ -1,0 +1,43 @@
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v3.4.0
+  hooks:
+  # check syntax of static files
+  - id: check-yaml
+  - id: check-json
+  - id: check-toml
+
+  # check common file mistakes
+  - id: end-of-file-fixer
+  - id: trailing-whitespace
+    args: [--markdown-linebreak-ext=md]
+  - id: mixed-line-ending
+    files: ^windows/
+    args:
+      - --fix=crlf
+  - id: mixed-line-ending
+    files: ^unix/
+    args:
+      - --fix=lf
+
+  - id: check-merge-conflict
+  - id: check-symlinks
+
+- repo: https://github.com/mozilla-platform-ops/pre-commit-hooks
+  rev: 2.1.4
+  hooks:
+
+  # shell linting
+  - id: shellcheck
+    entry: shellcheck
+    language: python
+    types: [shell]
+    additional_dependencies: [shellcheck-py]
+
+
+  # Adhere to the google shell guide:
+  # Executables should have no extension (strongly preferred)
+  - id: script-must-not-have-extension
+    types:
+    - shell
+    - executable
