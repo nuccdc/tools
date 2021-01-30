@@ -7,7 +7,7 @@
 #date        :July 2014
 #website     :www.setuptips.com
 # ----------------------------------------------------------------------
-# jailuser.sh <username> 
+# jailuser.sh <username>
 #
 # This script creates a jailed ssh session for user <username> whenever they
 # they login to the server thereafter. The <username> is restricted to
@@ -31,7 +31,7 @@ JAILPATH='/jail'
 mkdir -p $JAILPATH
 
 #
-# Add the apps you want the user to have access to in their jailed 
+# Add the apps you want the user to have access to in their jailed
 # environment.
 #
 APPS="/bin/bash /bin/cat /bin/cp /bin/grep /bin/ls /bin/mkdir /bin/more /bin/mv /bin/pwd /bin/rm /bin/rmdir /usr/bin/du /usr/bin/head /usr/bin/id /usr/bin/less /usr/bin/tail"
@@ -41,7 +41,7 @@ if ! getent group jailed > /dev/null 2>&1
 then
   echo "creating jailed group"
   groupadd -r jailed
-fi 
+fi
 
 if ! grep -q "Match group jailed" /etc/ssh/sshd_config
 then
@@ -67,8 +67,8 @@ then
   exit 1
 fi
 
-if getent passwd $CHROOT_USERNAME > /dev/null 2>&1
-then 
+if getent passwd "$CHROOT_USERNAME" > /dev/null 2>&1
+then
   echo "* User $CHROOT_USERNAME exists. Jailing them"
 else
   echo "User $CHROOT_USERNAME does not exist. Add the user first then run this script again" >&2
@@ -77,47 +77,47 @@ fi
 
 echo "* adding user to jailed group - so that ssh will jail them automatically when they login"
 
-usermod -a -G jailed ${CHROOT_USERNAME}
+usermod -a -G jailed "${CHROOT_USERNAME}"
 
-group_name=`id -gn ${CHROOT_USERNAME}`
+group_name=$(id -gn "${CHROOT_USERNAME}")
 
 chrooted_home="$JAILPATH/home"
 virtual_home="$chrooted_home/$CHROOT_USERNAME"
- 
 
-mkdir -p ${chrooted_home}
-chown root:root ${chrooted_home}
-chmod 755 ${chrooted_home}
 
-mkdir -p ${virtual_home}
-chown $CHROOT_USERNAME:$group_name ${virtual_home}
-chmod 0700 ${virtual_home}
+mkdir -p "${chrooted_home}"
+chown root:root "${chrooted_home}"
+chmod 755 "${chrooted_home}"
+
+mkdir -p "${virtual_home}"
+chown "$CHROOT_USERNAME:$group_name" "${virtual_home}"
+chmod 0700 "${virtual_home}"
 
 # If root ever su's to users home this makes sure we go to the correct
-# home directory. 
+# home directory.
 
 # backup old directory.
-if [ ! -h "/home/${CHROOT_USERNAME}" -a -d "/home/${CHROOT_USERNAME}" ]
+if [ ! -L "/home/${CHROOT_USERNAME}" ] && [ -d "/home/${CHROOT_USERNAME}" ]
 then
   echo "* Backing up users previous home to /home/${CHROOT_USERNAME}.orig"
-  mv /home/${CHROOT_USERNAME} /home/${CHROOT_USERNAME}.orig
+  mv "/home/${CHROOT_USERNAME}" "/home/${CHROOT_USERNAME}.orig"
 fi
 
 if [ ! -e "/home/${CHROOT_USERNAME}" ]
 then
   echo "* Creating link from chrooted home to /home"
-  ln -s ${virtual_home} /home/${CHROOT_USERNAME}
+  ln -s "${virtual_home}" "/home/${CHROOT_USERNAME}"
 fi
 
 
-cd $JAILPATH 
+cd $JAILPATH || (echo "Could not create JAILPATH ${JAILPATH}"; exit 1)
 mkdir -p dev
 mkdir -p bin
 mkdir -p lib64
 mkdir -p etc
 mkdir -p usr/bin
 mkdir -p usr/lib64
- 
+
 # First time
 if [ ! -f etc/group ] ; then
  echo "* setting up the jail for the first time"
@@ -130,13 +130,13 @@ fi
 
 # Append primary group if not already there.
 if ! grep -q "^${group_name}:" ${JAILPATH}/etc/group
-then 
+then
   grep "^${group_name}:" /etc/group >> ${JAILPATH}/etc/group
 fi
 
 # Append this user if not already there.
 if ! grep -q "^${CHROOT_USERNAME}:" ${JAILPATH}/etc/passwd
-then 
+then
   grep "^${CHROOT_USERNAME}:" /etc/passwd >> ${JAILPATH}/etc/passwd
 fi
 
@@ -164,7 +164,7 @@ fi
 [ -r $JAILPATH/dev/zero ]    || mknod -m 666 $JAILPATH/dev/zero    c 1 5
 [ -r $JAILPATH/dev/tty ]     || mknod -m 666 $JAILPATH/dev/tty     c 5 0
 
- 
+
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 #
@@ -173,17 +173,17 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 #
 for prog in $APPS
 do
-  cp $prog ${JAILPATH}${prog} > /dev/null 2>&1
-  if ldd $prog > /dev/null
+  cp "$prog" "${JAILPATH}${prog}" > /dev/null 2>&1
+  if ldd "$prog" > /dev/null
   then
-    LIBS=`ldd $prog | grep '/lib' | sed 's/\t/ /g' | sed 's/ /\n/g' | grep "/lib"`
+    LIBS=$(ldd "$prog" | grep '/lib' | sed 's/\t/ /g' | sed 's/ /\n/g' | grep "/lib")
     for l in $LIBS
     do
-      mkdir -p ./`dirname $l` > /dev/null 2>&1
-      cp $l ./$l  > /dev/null 2>&1
+      mkdir -p "./$(dirname "$l")" > /dev/null 2>&1
+      cp "$l" "./$l"  > /dev/null 2>&1
     done
   fi
 done
- 
+
 echo "Chrooted environment created under ${JAILPATH} for ${CHROOT_USERNAME}"
 echo
