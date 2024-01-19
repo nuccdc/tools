@@ -1,0 +1,20 @@
+- name: Download sysinternals, put in C:\sysinternals, rename
+  ansible.builtin.include_tasks: sysinternals.yml
+
+- name: Pass change non ansible users
+  ansible.builtin.include_tasks: pass-change.yml
+
+- name: Change ansible user password
+  ansible.builtin.include_tasks: change-ans-pass.yml
+
+- name: Ensure NTP on
+  ansible.builtin.include_tasks: ntp-on.yml
+
+- name: Firewall on
+  ansible.builtin.include_tasks: firewall-on.yml
+
+- name: Defender on with no exclusions
+  ansible.builtin.include_tasks: defender.yml
+
+- name: Winrm add ansible client to trustedhosts
+  ansible.builtin.include_tasks: winrm.yml

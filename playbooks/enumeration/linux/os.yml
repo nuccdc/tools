@@ -1,0 +1,15 @@
+- name: Get hostname
+  ansible.builtin.shell: echo $HOSTNAME
+  changed_when: false
+  register: hostname
+- name: Get os information
+  ansible.builtin.shell: cat /etc/*-release
+  changed_when: false
+  ignore_errors: true
+  register: os_info
+- name: Print hostname
+  ansible.builtin.debug:
+    var: hostname.stdout
+- name: Print OS information
+  ansible.builtin.debug:
+    var: os_info.stdout_lines

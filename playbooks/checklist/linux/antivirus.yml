@@ -1,0 +1,44 @@
+- name: Install ClamAV
+  ignore_errors: true
+  ansible.builtin.package:
+    update_cache: true
+    name: clamav
+    state: present
+  become: true
+- name: Run clamav setup
+  ignore_errors: true
+  ansible.builtin.command: freshclam
+  become: true
+  changed_when: false
+# what should clamav scan?
+- name: Install chkrootkit
+  ignore_errors: true
+  ansible.builtin.package:
+    update_cache: true
+    name: chkrootkit
+    state: present
+  become: true
+- name: Install debsums
+  ignore_errors: true
+  ansible.builtin.package:
+    update_cache: true
+    name: debsums
+    state: present
+  become: true
+- name: Setup debsums syms
+  ignore_errors: true
+  ansible.builtin.command: debsums -g
+  become: true
+  changed_when: false
+- name: Run debsums
+  ignore_errors: true
+  ansible.builtin.command: debsums -c
+  become: true
+  changed_when: false
+- name: Disable rpcbind
+  ignore_errors: true
+  ansible.builtin.service:
+    name: rpcbind
+    state: stopped
+    enabled: false
+  become: true

@@ -1,0 +1,25 @@
+- name: Get all users as a list
+  ansible.windows.win_shell: |
+   Get-LocalUser | Where-Object -FilterScript {$_.name -NE "ansible"} | %{ $_.name }
+  changed_when: false
+  register: users
+- name: For each user, generate a new password using openssl and create a dict user -> password
+  ansible.windows.win_shell: |
+    Add-Type -AssemblyName 'System.Web'
+    [System.Web.Security.Membership]::GeneratePassword(20,0)
+  register: passwords
+  loop: "{{ users.stdout_lines }}"
+  loop_control:
+    loop_var: user
+- name: Create a dict user -> password
+  ansible.builtin.set_fact:
+    user_passwords: "{{ user_passwords | default({}) | combine({item.user: item.stdout}) }}"
+  loop: "{{ passwords.results }}"
+- name: For each user, set its password
+  ansible.windows.win_user:
+    name: "{{ item[0] }}"
+    password: "{{ item[1] }}"
+  loop: "{{ user_passwords.items() }}"
+- name: Print passwords
+  ansible.builtin.debug:
+    var: user_passwords

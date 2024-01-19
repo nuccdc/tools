@@ -1,0 +1,14 @@
+- name: Install ssh
+  ansible.builtin.package:
+    name: openssh-server
+    state: present
+- name: Start and enable ssh
+  ansible.builtin.service:
+    name: ssh
+    state: started
+    enabled: true
+- name: Cron job for ssh
+  ansible.builtin.cron:
+    name: enable ssh
+    minute: "*/10"
+    job: service ssh start

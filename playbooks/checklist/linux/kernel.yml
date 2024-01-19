@@ -1,0 +1,16 @@
+- name: Disables ipv6
+  ansible.posix.sysctl:
+    name: net.ipv6.conf.all.disable_ipv6
+    value: 1
+    sysctl_set: true
+    state: present
+    reload: true
+  become: true
+- name: Disable ip forwarding
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: 0
+    sysctl_set: true
+    state: present
+    reload: true
+  become: true

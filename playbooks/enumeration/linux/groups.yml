@@ -1,0 +1,7 @@
+- name: Get group information for every user, remove groups with no users
+  ansible.builtin.shell: cat /etc/group | sed "/\:$/d"
+  register: groups_res
+  changed_when: false
+- name: Print groups
+  ansible.builtin.debug:
+    var: groups_res.stdout_lines

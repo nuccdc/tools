@@ -1,0 +1,7 @@
+- name: Ensure NTP is on
+  ansible.windows.win_shell: |
+    net start w32time
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Config" -name "AnnounceFlags" -Value 5
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\NtpServer" -Name "Enabled" -Value 1
+    Restart-Service w32Time
+    w32tm /resync

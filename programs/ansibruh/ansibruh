@@ -1,0 +1,218 @@
+#!/usr/bin/python3
+
+import multiprocessing
+import os
+import argparse
+import signal
+
+
+import pty
+from os import waitpid, execv, read, write
+
+
+def run_ssh(command, timeout, password=None):
+    pid, child_fd = pty.fork()
+
+    if not pid:
+        # Child process
+        execv(command[0], command)
+    else:
+        # Parent
+        def timeout_handler(signum, frame):
+            # kill the child process
+            os.kill(pid, signal.SIGKILL)
+            print("-- Timed out!!!")
+
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(timeout)
+
+    final_output = []
+
+    # if we havn't setup pub-key authentication
+    # we can loop for a password promt and "insert" the password.
+    while True:
+        try:
+            output = read(child_fd, 1024).strip()
+        except:
+            break
+        lower = output.lower()
+        # Write the password
+        if b'password:' in lower:
+            if password is None:
+                print('-- Error while SSHing: Password is required')
+                return None
+            write(child_fd, password.encode("utf-8") + b'\n')
+            break
+        elif b'are you sure you want to continue connecting' in lower:
+            # Adding key to known_hosts
+            write(child_fd, b'yes\n')
+        else:
+            # we got some output, but not a password prompt
+            final_output.append(output)
+            break
+
+    first = True
+    while True:
+        try:
+            if first and len(final_output) > 0:
+                final_output.append(b'\n')
+                first = False
+            final_output.append(read(child_fd, 1024).strip())
+        except:
+            break
+
+    waitpid(pid, 0)
+    if pid:
+        # all gucci
+        signal.alarm(0)
+
+    return ''.join([x.decode("utf-8") for x in final_output])
+
+
+class Cred:
+    def __init__(self, user, host, password, port):
+        self.user = user
+        self.password = password
+        self.host = host
+        self.port = port
+
+    def __str__(self):
+        return "{}:{}@{}:{}".format(self.user, self.password, self.host, self.port)
+
+
+def cred_parser(cred_line):
+    split = cred_line.split("@")
+    user_part = split[0]
+    host_part = split[1]
+
+    user_split = user_part.split(":")
+    user = user_split[0]
+    if len(user_split) > 1:
+        password = user_split[1]
+    else:
+        password = None
+
+    host_split = host_part.split(":")
+    host = host_split[0]
+    if len(host_split) > 1:
+        port = host_split[1]
+    else:
+        port = "22"
+
+    return Cred(user, host, password, port)
+
+
+def run_cmd(cred, cmd, timeout, key=None):
+    # if cmd is a file, we scp it over and run it
+    if os.path.isfile(cmd):
+        if args.verbose:
+            print("cmd is a file, scp'ing it over")
+        remote_path = "/tmp/{}".format(os.path.basename(cmd))
+        scp_cmd = ["/usr/bin/scp", "-P", cred.port, cmd,
+                   "{}@{}:{}".format(cred.user, cred.host, remote_path)]
+        if key is not None:
+            scp_cmd.append("-i")
+            scp_cmd.append(key)
+        if args.verbose:
+            print("scp cmd: {}".format(scp_cmd))
+
+        outs = run_ssh(scp_cmd, timeout, cred.password)
+        if args.verbose:
+            print("scp output: {}".format(outs))
+
+        # exec perms and run
+        cmd = "chmod +x {} && {}".format(remote_path, remote_path)
+
+    ssh_cmd = ["/usr/bin/ssh", "-p", cred.port, "{}@{}".format(
+        cred.user, cred.host), cmd]
+    if key is not None:
+        ssh_cmd.append("-i")
+        ssh_cmd.append(key)
+    if args.verbose:
+        print("ssh cmd: {}".format(ssh_cmd))
+
+    outs = run_ssh(ssh_cmd, timeout, cred.password)
+    if args.verbose:
+        print("ssh output: {}".format(outs))
+
+    return outs
+
+def run_cred(tpl):
+    cred, args = tpl
+    if args.verbose:
+        print("running cmd: {} on cred: {}".format(args.cmd, str(cred)))
+    outs = run_cmd(cred, args.cmd, args.timeout, key)
+
+    if outs is None:
+        return None
+
+    # pretty output
+    cred_line = "#### {} ####".format(str(cred))
+    output = cred_line + "\n" + outs
+    return output
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "creds", help="credentials for SSH. can be comma separated or a file. Ex: 'root:toor@1.1.1.1,admin:admin@2.2.2.2:1337'")
+    parser.add_argument(
+        "cmd", help="command or file to run on the remote host")
+    parser.add_argument("-t", "--timeout",
+                        help="timeout for the command", default=30)
+    parser.add_argument(
+        "-k", "--key", help="SSH key to use, if any. Used only if no password is given.", default=None)
+    parser.add_argument("-a", "--always-use-key",
+                        help="always use the key, even if a password is given", action="store_true", default=False)
+    parser.add_argument(
+        "-o", "--output", help="output file. default is stdout", default=None)
+    parser.add_argument("-v", "--verbose", help="verbose output",
+                        action="store_true", default=False)
+    args = parser.parse_args()
+
+    if os.path.isfile(args.creds):
+        with open(args.creds, "r") as f:
+            creds = f.readlines()
+    else:
+        creds = args.creds.split(",")
+
+    if args.verbose:
+        print("creds raw: {}".format(creds))
+
+    creds = [cred_parser(cred.strip()) for cred in creds]
+
+    if args.verbose:
+        print("creds parsed: {}".format([str(cred) for cred in creds]))
+
+    if args.key is not None:
+        if args.verbose:
+            print("key given, using it")
+        key = args.key
+    else:
+        key = None
+
+    if args.verbose:
+        print("key: {}".format(key))
+
+    if args.output is not None:
+        output_file = open(args.output, "w")
+    else:
+        output_file = None
+
+    pool = multiprocessing.Pool(processes=len(creds))
+
+    outputs = pool.map(run_cred, [(cred, args) for cred in creds])
+    pool.close()
+
+    for output in outputs:
+        if output is None:
+            continue
+        if output_file is not None:
+            output_file.write(output + "\n")
+        else:
+            print(output)
+
+    if output_file is not None:
+        output_file.close()
+
+    if args.verbose:
+        print("done")

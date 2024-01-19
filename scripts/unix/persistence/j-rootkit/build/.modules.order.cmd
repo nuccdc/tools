@@ -1,0 +1,1 @@
+savedcmd_/home/synchronous/code/nuccdc/tools/scripts/unix/persistence/j-rootkit/build/modules.order := {   echo /home/synchronous/code/nuccdc/tools/scripts/unix/persistence/j-rootkit/build/rootkit.o; :; } > /home/synchronous/code/nuccdc/tools/scripts/unix/persistence/j-rootkit/build/modules.order

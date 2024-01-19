@@ -1,0 +1,1 @@
+savedcmd_/home/synchronous/code/nuccdc/tools/scripts/unix/persistence/j-rootkit/build/rootkit.mod := printf '%s\n'   rootkit.o | awk '!x[$$0]++ { print("/home/synchronous/code/nuccdc/tools/scripts/unix/persistence/j-rootkit/build/"$$0) }' > /home/synchronous/code/nuccdc/tools/scripts/unix/persistence/j-rootkit/build/rootkit.mod

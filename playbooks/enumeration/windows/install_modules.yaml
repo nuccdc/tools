@@ -1,0 +1,6 @@
+- name: Install ActiveDirectory Module
+  ansible.windows.win_shell: Add-WindowsCapability -Online -Name Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0
+  become: true
+  become_method: runas
+  become_user: SYSTEM
+  ignore_errors: true

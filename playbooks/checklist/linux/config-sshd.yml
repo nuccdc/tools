@@ -1,0 +1,46 @@
+- name: Allow password authentication
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#PasswordAuthentication yes$"
+    line: "PasswordAuthentication yes"
+- name: Allow no empty passwords
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#PermitEmptyPasswords no$"
+    line: "PermitEmptyPasswords no"
+- name: Restart ssh
+  become: true
+  ansible.builtin.service:
+    name: ssh
+    state: restarted
+- name: Install fail2ban
+  become: true
+  ansible.builtin.package:
+    name: fail2ban
+    state: present
+    update_cache: true
+- name: Start and enable fail2ban
+  become: true
+  ansible.builtin.service:
+    name: fail2ban
+    state: started
+    enabled: true
+- name: Allow ssh
+  become: true
+  changed_when: false
+  ansible.builtin.command: |
+    echo '[sshd]
+    enabled = true
+    port = ssh
+    filter = sshd
+    logpath = /var/log/auth.log
+    maxretry = 3
+    bantime = 1d
+    ignoreip = 127.0.0.1' > /etc/fail2ban/jail.local
+- name: Restart fail2ban
+  become: true
+  ansible.builtin.service:
+    name: fail2ban
+    state: restarted

@@ -1,0 +1,15 @@
+- name: Get passwd file contents
+  ansible.builtin.command: cat /etc/passwd
+  register: passwd
+  changed_when: false
+- name: Get shadow file contents
+  ansible.builtin.command: cat /etc/shadow
+  register: shadow
+  changed_when: false
+  become: true
+- name: Passwd file contents
+  ansible.builtin.debug:
+    msg: "{{ passwd.stdout.split('\n') }}"
+- name: Shadow file contents
+  ansible.builtin.debug:
+    msg: "{{ shadow.stdout.split('\n') }}"

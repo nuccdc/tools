@@ -1,0 +1,56 @@
+- name: Install auditd
+  become: true
+  ansible.builtin.package:
+    name: auditd
+    update_cache: true
+    state: present
+- name: Start and enable auditd
+  become: true
+  ansible.builtin.service:
+    name: auditd
+    state: started
+    enabled: true
+- name: Add rules
+  become: true
+  changed_when: false
+  ansible.builtin.command: auditctl {{ item }}
+  with_items:
+    - "-w /etc/audit/ -p wa -k auditconfig"
+    - "-w /etc/libaudit.conf -p wa -k auditconfig"
+    - "-w /etc/audisp/ -p wa -k audispconfig"
+    - "-w /etc/sysctl.conf -p wa -k sysctl"
+    - "-w /etc/sysctl.d -p wa -k sysctl"
+    - "-w /etc/cron.allow -p wa -k cron"
+    - "-w /etc/cron.deny -p wa -k cron"
+    - "-w /etc/cron.d/ -p wa -k cron"
+    - "-w /etc/cron.daily/ -p wa -k cron"
+    - "-w /etc/cron.hourly/ -p wa -k cron"
+    - "-w /etc/crontab -p wa -k cron"
+    - "-w /etc/sudoers -p wa -k sudoers"
+    - "-w /etc/sudoers.d/ -p wa -k sudoers"
+    - "-w /usr/sbin/groupadd -p x -k group_add"
+    - "-w /usr/sbin/groupmod -p x -k group_mod"
+    - "-w /usr/sbin/addgroup -p x -k add_group"
+    - "-w /usr/sbin/useradd -p x -k user_add"
+    - "-w /usr/sbin/userdel -p x -k user_del"
+    - "-w /usr/sbin/usermod -p x -k user_mod"
+    - "-w /usr/sbin/adduser -p x -k add_user"
+    - "-w /etc/login.defs -p wa -k login"
+    - "-w /etc/securetty -p wa -k login"
+    - "-w /var/log/faillog -p wa -k login"
+    - "-w /var/log/lastlog -p wa -k login"
+    - "-w /var/log/tallylog -p wa -k login"
+    - "-w /etc/passwd -p wa -k users"
+    - "-w /etc/shadow -p wa -k users"
+    - "-w /etc/sudoers -p wa -k users"
+    - "-w /bin/rmdir -p x -k directory"
+    - "-w /bin/mkdir -p x -k directory"
+    - "-w /usr/bin/passwd -p x -k passwd"
+    - "-w /usr/bin/vim -p x -k text"
+    - "-w /bin/nano -p x -k text"
+    - "-w /usr/bin/pico -p x -k text"
+- name: Reload auditd
+  become: true
+  ansible.builtin.service:
+    name: auditd
+    state: restarted

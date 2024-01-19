@@ -1,0 +1,38 @@
+- name: Get interface names
+  ansible.builtin.shell: ip a | grep -v "lo" | grep "UP" | awk '{print $2}' | cut -d ":" -f1
+  register: interfaces
+  changed_when: false
+- name: Get IPS for all interfaces
+  ansible.builtin.shell: ip a show {{ item }} | grep "inet" | awk '{print $2}'
+  register: ip_addrs
+  changed_when: false
+  loop: "{{ interfaces.stdout_lines }}"
+- name: Get MACs for all interfaces
+  ansible.builtin.shell: ip a show {{ item }} | grep "link/ether" | awk '{print $2}'
+  register: mac_addrs
+  changed_when: false
+  loop: "{{ interfaces.stdout_lines }}"
+- name: Create a map of interface -> ips
+  ansible.builtin.set_fact:
+    ip_map: "{{ ip_map | default({}) | combine({item[0]: item[1]}) }}"
+  with_items:
+    - "{{ interfaces.stdout_lines | zip(ip_addrs.results | map(attribute='stdout_lines') | list) | list }}"
+- name: Create a map of interface -> mac
+  ansible.builtin.set_fact:
+    mac_map: "{{ mac_map | default({}) | combine({item[0]: item[1]}) }}"
+  with_items:
+    - "{{ interfaces.stdout_lines | zip(mac_addrs.results | map(attribute='stdout_lines') | list) | list }}"
+- name: Get netstat
+  ansible.builtin.command: netstat -lntup
+  become: true
+  register: netstat
+  changed_when: false
+- name: Print interface -> ips
+  ansible.builtin.debug:
+    msg: "{{ ip_map }}"
+- name: Print interface -> mac
+  ansible.builtin.debug:
+    msg: "{{ mac_map }}"
+- name: Print netstat
+  ansible.builtin.debug:
+    msg: "{{ netstat }}"

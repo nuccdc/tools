@@ -1,0 +1,8 @@
+- name: Ensure Defender on with no exceptions
+  ansible.windows.win_shell: >
+    Set-MpPreference -DisableRealtimeMonitoring $false;
+    Get-MpPreference | Select-Object -Property ExclusionExtension |
+    % { if ($_.ExclusionExtension -ne $null) {Remove-MpPreference -ExclusionExtension $_.ExclusionExtension}};
+    Get-MpPreference | Select-Object -Property ExclusionPath | % {if ($_.ExclusionPath -ne $null) {Remove-MpPreference -ExclusionPath $_.ExclusionPath}};
+    Get-MpPreference | Select-Object -Property ExclusionProcess |
+    % {if ($_.ExclusionProcess -ne $null) {Remove-MpPreference -ExclusionProcess $_.ExclusionProcess}}

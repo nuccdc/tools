@@ -1,0 +1,40 @@
+- name: Get all files in the cron directories
+  ansible.builtin.find:
+    paths: "{{ item }}"
+    file_type: file
+    recurse: true
+  become: true
+  with_items:
+    - /etc/cron.d
+    - /etc/cron.daily
+    - /etc/cron.hourly
+    - /etc/cron.monthly
+    - /etc/cron.weekly
+    - /var/spool/cron
+    - /etc/anacrontab
+    - /var/spool/anacron
+  register: cron_files_unproc
+  changed_when: false
+- name: Produce a list of all the paths from the found cron files
+  ansible.builtin.set_fact:
+    cron_files: "{{ cron_files_unproc.results | map(attribute='files') | list | flatten | map(attribute='path') }}"
+- name: Get contents of all the files ignoring comments
+  ansible.builtin.shell: cat {{ item }} | grep -v "^#"
+  become: true
+  register: cron_file_contents
+  changed_when: false
+  loop: "{{ cron_files }}"
+- name: Produce a list of all the outputs of cron_file_contents
+  ansible.builtin.set_fact:
+    cron_file_contents_out: "{{ cron_file_contents.results | map(attribute='stdout_lines') }}"
+- name: Produce a dictionary of filepath -> file-content
+  ansible.builtin.set_fact:
+    cron_content_map: "{{ cron_content_map | default({}) | combine({item[0]: item[1]}) }}"
+  with_items:
+    - "{{ cron_files | zip(cron_file_contents_out) | list }}"
+- name: Show crontab contents of files under /var/spool/cron
+  ansible.builtin.debug:
+    msg: "{{ cron_content_map | dict2items(key_name='path', value_name='contents') | selectattr('path', 'match', '^/var/spool/cron/') }}"
+- name: Show all crontab filepaths
+  ansible.builtin.debug:
+    msg: "{{ cron_files }}"

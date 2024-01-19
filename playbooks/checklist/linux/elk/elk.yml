@@ -1,0 +1,70 @@
+# Clone the Docker Compose ELK repo, configure passwords/CA, and run it
+
+- name: Set ELK Docker Compose path
+  set_fact:
+    elk_compose_repo_path: /home/ubuntu/docker-elk
+
+- name: Clone ELK Docker Compose repo
+  git:
+    repo: https://github.com/deviantony/docker-elk.git
+    dest: "{{ elk_compose_repo_path }}"
+    clone: yes
+    update: yes
+    version: tls
+
+- name: Generate random ELK passwords
+  set_fact:
+    elastic_password: "{{ lookup('community.general.random_string', special=false, length=15) }}"
+    logstash_internal_password: "{{ lookup('community.general.random_string', special=false, length=15) }}"
+    kibana_system_password: "{{ lookup('community.general.random_string', special=false, length=15) }}"
+
+- name: Format ELK passwords output
+  set_fact:
+    elk_passwords_output: "elastic:{{ elastic_password }}\nlogstash_internal:{{ logstash_internal_password }}\nkibana_system:{{ kibana_system_password }}"
+
+- name: Print out new ELK passwords
+  debug:
+    msg: "{{ elk_passwords_output.split('\n') }}"
+
+- name: Set elastic password in .env file
+  replace:
+    path: "{{ elk_compose_repo_path }}/.env"
+    regexp: "^(ELASTIC_PASSWORD=').*'$"
+    replace: "\\1{{ elastic_password }}'"
+
+- name: Set logstash_internal password in .env file
+  replace:
+    path: "{{ elk_compose_repo_path }}/.env"
+    regexp: "^(LOGSTASH_INTERNAL_PASSWORD=').*'$"
+    replace: "\\1{{ logstash_internal_password }}'"
+
+- name: Set kibana_system password in .env file
+  replace:
+    path: "{{ elk_compose_repo_path }}/.env"
+    regexp: "^(KIBANA_SYSTEM_PASSWORD=').*'$"
+    replace: "\\1{{ kibana_system_password }}'"
+
+- name: Get SHA256 fingerprint of CA for Fleet
+  shell: "docker compose -f {{ elk_compose_repo_path }}/docker-compose.yml up tls | grep SHA256 | awk -F': ' '{print $2}'"
+  register: sha256_fingerprint
+
+- name: Put SHA256 fingerprint into kibana.yml file
+  replace:
+    path: "{{ elk_compose_repo_path }}/kibana/config/kibana.yml"
+    regexp: '#ca_trusted_fingerprint: .*$'
+    replace: 'ca_trusted_fingerprint: {{ sha256_fingerprint.stdout }}'
+
+- name: Run ELK Docker Compose repo
+  community.docker.docker_compose:
+    project_src: "{{ elk_compose_repo_path }}"
+
+- name: Wait for ELK to initialize
+  ansible.builtin.pause:
+    seconds: 75
+
+- name: Run Fleet repo
+  community.docker.docker_compose:
+    project_src: "{{ elk_compose_repo_path }}"
+    files:
+      - docker-compose.yml
+      - extensions/fleet/fleet-compose.yml

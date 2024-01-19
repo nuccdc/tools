@@ -1,0 +1,12 @@
+- name: Start antivirus task
+  ansible.builtin.include_tasks: antivirus.yml
+- name: Start kernel params task
+  ansible.builtin.include_tasks: kernel.yml
+- name: Start firewall task
+  ansible.builtin.include_tasks: firewall.yml
+- name: Enable ssh
+  ansible.builtin.include_tasks: enable-ssh.yml
+- name: Config ssh
+  ansible.builtin.include_tasks: config-sshd.yml
+- name: Setup auditd
+  ansible.builtin.include_tasks: auditd-setup.yml

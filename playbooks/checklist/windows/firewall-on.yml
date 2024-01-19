@@ -1,0 +1,8 @@
+- name: Ensure firewall is on
+  win_firewall:
+    state: enabled
+    profiles:
+      - Domain
+      - Private
+      - Public
+  tags: enable_firewall

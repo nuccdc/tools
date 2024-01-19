@@ -1,0 +1,21 @@
+# Playbook to install ELK via Docker Compose
+
+#- hosts: elkservers
+#  remote_user: ubuntu
+#  become: yes
+#  become_user: root
+#  tasks:
+
+- block:
+  - name: Install Docker Compose
+    ansible.builtin.include_tasks: docker.yml
+    when: inventory_hostname in groups['elkservers']
+
+  become: true
+
+- block:
+  - name: Run ELK
+    ansible.builtin.include_tasks: elk.yml
+    when: inventory_hostname in groups['elkservers']
+
+  become: true

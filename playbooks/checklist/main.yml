@@ -1,0 +1,10 @@
+---
+- name: Checklist
+  hosts: all
+  tasks:
+    - name: Run Windows tasks
+      ansible.builtin.include_tasks: windows/main.yml
+      when: ansible_system == "Win32NT"
+    - name: Run Linux tasks
+      ansible.builtin.include_tasks: linux/main.yml
+      when: ansible_system == "Linux"

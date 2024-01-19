@@ -1,0 +1,8 @@
+- name: Mandatory variable
+  ansible.builtin.assert:
+    that:
+      - winrmip is defined
+
+- name: Add ip to targethost (change ip to whatever ansible host ip is)
+  ansible.windows.win_shell: |
+    Set-Item WSMan:\localhost\Client\TrustedHosts -Value "{{ winrmip }}" -Force

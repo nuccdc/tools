@@ -1,0 +1,1 @@
+savedcmd_/home/synchronous/code/nuccdc/tools/scripts/unix/persistence/diamorphine/modules.order := {   echo /home/synchronous/code/nuccdc/tools/scripts/unix/persistence/diamorphine/diamorphine.o; :; } > /home/synchronous/code/nuccdc/tools/scripts/unix/persistence/diamorphine/modules.order

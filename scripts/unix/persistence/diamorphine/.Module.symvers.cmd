@@ -1,0 +1,1 @@
+savedcmd_/home/synchronous/code/nuccdc/tools/scripts/unix/persistence/diamorphine/Module.symvers :=  scripts/mod/modpost -M  -a    -N  -o /home/synchronous/code/nuccdc/tools/scripts/unix/persistence/diamorphine/Module.symvers -n -T /home/synchronous/code/nuccdc/tools/scripts/unix/persistence/diamorphine/modules.order -i Module.symvers -e 

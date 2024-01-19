@@ -1,0 +1,21 @@
+- name: Check if already installed
+  ansible.windows.win_stat:
+    path: C:\sysinternals\autorunsc64_ccdc.exe
+  register: check
+
+- name: Pull sysinternals
+  ansible.windows.win_get_url:
+    url: https://download.sysinternals.com/files/SysinternalsSuite.zip
+    dest: C:\SysinternalsSuite.zip
+  when: not check.stat.exists
+
+- name: Unzip sysinternals
+  community.windows.win_unzip:
+    src: C:\SysinternalsSuite.zip
+    dest: C:\sysinternals
+  when: not check.stat.exists
+
+- name: Change all sysinternals to format
+  ansible.windows.win_shell: |
+    Get-ChildItem C:\sysinternals\* | Rename-Item -NewName {$_.Name -replace ".exe","_ccdc.exe"}
+  when: not check.stat.exists

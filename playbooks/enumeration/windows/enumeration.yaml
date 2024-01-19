@@ -1,0 +1,241 @@
+- name: Display Windows Defender Exclusions
+  ansible.windows.win_shell: Get-MpPreference
+  become: true
+  become_method: runas
+  become_user: SYSTEM
+  ignore_errors: true
+  register: defender
+
+- name: Output
+  ansible.builtin.debug:
+    var: defender.stdout_lines
+  when: not defender.failed
+  ignore_errors: true
+
+- name: Gather Firewall Information
+  ansible.windows.win_shell: Get-NetFirewallProfile
+  become: true
+  become_method: runas
+  become_user: SYSTEM
+  ignore_errors: true
+  register: firewall
+
+- name: Output
+  ansible.builtin.debug:
+    var: firewall.stdout_lines
+  when: not firewall.failed
+  ignore_errors: true
+
+# Would this command be better?
+# - name: Gather Firewall Information
+#   ansible.windows.win_shell: netsh firewall show config
+#   become: true
+#   become_method: runas
+  # register: firewallinfo
+  # ignore_errors: true
+
+# - name: Output
+#   ansible.builtin.debug:
+#     var: firewallinfo.stdout_lines
+  # when: not firewallinfo.failed
+  # ignore_errors: true
+
+- name: List Open Ports
+  ansible.windows.win_shell: netstat -anpos tcp
+  become: true
+  become_method: runas
+  become_user: SYSTEM
+  ignore_errors: true
+  register: ports
+
+- name: Output
+  ansible.builtin.debug:
+    var: ports.stdout_lines
+  when: not ports.failed
+  ignore_errors: true
+
+- name: List SMB Shares
+  ansible.windows.win_shell: Get-SMBShare
+  become: true
+  become_method: runas
+  become_user: SYSTEM
+  ignore_errors: true
+  register: smb
+
+- name: Output
+  ansible.builtin.debug:
+    var: smb.stdout_lines
+  when: not smb.failed
+  ignore_errors: true
+
+- name: List SMB Shares Permissions
+  ansible.windows.win_shell: |
+    foreach($share in Get-SMBShare)
+    {
+    $name = $share.Name
+    Get-SMBShareAccess -Name "$name"
+    }
+  become: true
+  become_method: runas
+  become_user: SYSTEM
+  ignore_errors: true
+  register: smbperm
+
+- name: Output
+  ansible.builtin.debug:
+    var: smbperm.stdout_lines
+  when: not smbperm.failed
+  ignore_errors: true
+
+- name: List Domain Trust Relationships
+  ansible.windows.win_shell: Get-ADTrust -Filter *
+  become: true
+  become_method: runas
+  become_user: SYSTEM
+  ignore_errors: true
+  register: domaintrust
+
+- name: Output
+  ansible.builtin.debug:
+    var: domaintrust.stdout_lines
+  when: not domaintrust.failed
+  ignore_errors: true
+
+- name: List Domain
+  ansible.windows.win_shell: Get-ADDomain
+  become: true
+  become_method: runas
+  become_user: SYSTEM
+  ignore_errors: true
+  register: domain
+
+- name: Output
+  ansible.builtin.debug:
+    var: domain.stdout_lines
+  when: not domain.failed
+  ignore_errors: true
+
+- name: List Domain-Controller
+  ansible.windows.win_shell: Get-ADDomainController
+  become: true
+  become_method: runas
+  become_user: SYSTEM
+  ignore_errors: true
+  register: dc
+
+- name: Output
+  ansible.builtin.debug:
+    var: dc.stdout_lines
+  when: not dc.failed
+  ignore_errors: true
+
+- name: List Forest
+  ansible.windows.win_shell: Get-ADForest
+  become: true
+  become_method: runas
+  become_user: SYSTEM
+  ignore_errors: true
+  register: forest
+
+- name: Output
+  ansible.builtin.debug:
+    var: forest.stdout_lines
+  when: not forest.failed
+  ignore_errors: true
+
+- name: List all Users
+  ansible.windows.win_shell: |
+    foreach($user in Get-LocalUser)
+    {
+    net users $user
+    "+++++++++++++++++++++++++++++++++++++++"
+    }
+  become: true
+  become_method: runas
+  become_user: SYSTEM
+  ignore_errors: true
+  register: users
+
+- name: Output
+  ansible.builtin.debug:
+    var: users.stdout_lines
+  when: not users.failed
+  ignore_errors: true
+
+- name: List all Local Users (More Information)
+  ansible.windows.win_shell: Get-LocalUser | Format-List *
+  become: true
+  become_method: runas
+  become_user: SYSTEM
+  ignore_errors: true
+  register: localusers
+
+- name: Output
+  ansible.builtin.debug:
+    var: localusers.stdout_lines
+  when: not localusers.failed
+  ignore_errors: true
+
+- name: List all Local Groups
+  ansible.windows.win_shell: |
+    foreach($group in Get-LocalGroup)
+    {
+    $group
+    $gname = $group.Name
+    "Members of $gname :"
+    Get-LocalGroupMember -Name "$gname"
+    "---------------------------------------"
+    }
+  become: true
+  become_method: runas
+  become_user: SYSTEM
+  ignore_errors: true
+  register: localgroups
+
+- name: Output
+  ansible.builtin.debug:
+    var: localgroups.stdout_lines
+  when: not localgroups.failed
+  ignore_errors: true
+
+- name: Get Services, Service Accounts, and Service Startmode
+  ansible.windows.win_shell: Get-WmiObject win32_service | Format-Table Name, Startname, Startmode
+  become: true
+  become_method: runas
+  become_user: SYSTEM
+  ignore_errors: true
+  register: serviceaccounts
+
+- name: Output
+  ansible.builtin.debug:
+    var: serviceaccounts.stdout_lines
+  when: not serviceaccounts.failed
+  ignore_errors: true
+
+- name: Run Autoruns
+  ansible.windows.win_shell: C:\sysinternals\autorunsc64_ccdc.exe -a * -s -v -vt -accepteula
+  become: true
+  become_method: runas
+  become_user: SYSTEM
+  ignore_errors: true
+  register: autoruns
+
+- name: Output
+  ansible.builtin.debug:
+    var: autoruns.stdout_lines
+  when: not autoruns.failed
+  ignore_errors: true
+
+- name: Check WinRM
+  ansible.windows.win_shell: Test-WsMan
+  become: true
+  become_method: runas
+  become_user: SYSTEM
+  ignore_errors: true
+  register: winrm
+
+- name: Output
+  ansible.builtin.debug:
+    var: winrm.stdout_lines
+  when: not winrm.failed
+  ignore_errors: true

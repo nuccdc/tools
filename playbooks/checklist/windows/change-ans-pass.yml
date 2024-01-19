@@ -1,0 +1,9 @@
+- name: Ensure ansible password variable is defined
+  ansible.builtin.assert:
+    that:
+      - anspass is defined
+
+- name: Change ansible password
+  ansible.windows.win_user:
+    name: ansible
+    password: "{{ anspass }}"

@@ -1,0 +1,15 @@
+---
+- name: Detailed List of Windows Services
+  hosts: all
+  tasks:
+    - name: Get Information For All Installed Services
+      ansible.windows.win_service_info:
+      become: true
+      become_method: runas
+      become_user: SYSTEM
+      register: services
+
+    - name: Output
+      ansible.builtin.debug:
+        var: services.services
+      when: services.exists

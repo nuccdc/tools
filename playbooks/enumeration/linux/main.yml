@@ -1,0 +1,12 @@
+- name: Start users enumeration
+  ansible.builtin.include_tasks: users.yml
+- name: Start groups enumeration
+  ansible.builtin.include_tasks: groups.yml
+- name: Start network enumeration
+  ansible.builtin.include_tasks: network.yml
+- name: Start OS enumeration
+  ansible.builtin.include_tasks: os.yml
+- name: Start cron enumeration
+  ansible.builtin.include_tasks: cron.yml
+- name: Start docker enumeration
+  ansible.builtin.include_tasks: docker.yml

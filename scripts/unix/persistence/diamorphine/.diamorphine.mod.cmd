@@ -1,0 +1,1 @@
+savedcmd_/home/synchronous/code/nuccdc/tools/scripts/unix/persistence/diamorphine/diamorphine.mod := printf '%s\n'   diamorphine.o | awk '!x[$$0]++ { print("/home/synchronous/code/nuccdc/tools/scripts/unix/persistence/diamorphine/"$$0) }' > /home/synchronous/code/nuccdc/tools/scripts/unix/persistence/diamorphine/diamorphine.mod

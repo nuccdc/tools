@@ -1,0 +1,24 @@
+- name: Installs UFW
+  ignore_errors: true
+  ansible.builtin.package:
+    update_cache: true
+    name: ufw
+    state: present
+  become: true
+- name: Allow ssh
+  ignore_errors: true
+  ansible.builtin.command: ufw allow ssh
+  changed_when: false
+  become: true
+- name: Enable UFW
+  ignore_errors: true
+  ansible.builtin.service:
+    name: ufw
+    state: started
+    enabled: true
+  become: true
+- name: Enable UFW logging
+  ignore_errors: true
+  ansible.builtin.command: ufw logging on
+  changed_when: false
+  become: true

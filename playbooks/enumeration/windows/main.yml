@@ -1,0 +1,5 @@
+- name: Install Powershell Modules
+  ansible.builtin.include_tasks: install_modules.yaml
+
+- name: Enumerate Information
+  ansible.builtin.include_tasks: enumeration.yaml

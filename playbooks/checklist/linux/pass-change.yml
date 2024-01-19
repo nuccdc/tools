@@ -1,0 +1,28 @@
+- name: get all users as a list
+  become: true
+  shell: |
+    awk -F: '$3 >= 1000 || $3 == 0 {print $1}' /etc/passwd
+  changed_when: false
+  register: users
+- name: for each user, generate a new password using openssl and create a dict user -> password
+  become: true
+  shell: |
+    openssl rand -base64 20
+  changed_when: false
+  register: passwords
+  loop: "{{ users.stdout_lines }}"
+  loop_control:
+    loop_var: user
+- name: create a dict user -> password
+  set_fact:
+    user_passwords: "{{ user_passwords | default({}) | combine({item.user: item.stdout}) }}"
+  loop: "{{ passwords.results }}"
+- name: for each user, set its password
+  become: true
+  user:
+    name: "{{ item[0] }}"
+    password: "{{ item[1] }}"
+  loop: "{{ user_passwords.items() }}"
+- name: print passwords
+  debug:
+    var: user_passwords
